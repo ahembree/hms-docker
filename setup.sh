@@ -1,10 +1,20 @@
 #!/bin/bash
-source .env
 trap "exit" INT
 red=`tput setaf 1`
 green=`tput setaf 2`
 yellow=`tput setaf 3`
 reset=`tput sgr0`
+
+if [[ ! -d "$(pwd)/.env" ]] ; then
+  cp "$(pwd)/.env.example" "$(pwd)/.env"
+  echo "${yellow}You did not have a .env file, so the example has been copied.${reset}"
+  echo "${yellow}Please modify your .env file with the correct info.${reset}"
+  exit
+else
+  source .env
+  echo "${green}Found .env and sourced${reset}"
+  exit
+fi
 
 hostnameList=(
 plex
