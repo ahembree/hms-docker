@@ -81,6 +81,13 @@ Or you can create the single "catch all" record in this ```hosts``` file and jus
 
 The Transmission container from ```haugene/docker-transmission-openvpn``` also includes an OpenVPN client as well as a HTTP proxy (running on port 8888 of the transmission container) for other containers to route traffic through the VPN. You can find all supported VPN providers and configurations at https://github.com/haugene/docker-transmission-openvpn.
 
+## How everything connects
+- After port 80 is forwarded, update the DNS with your registrar to add a ```ombi.<TLD domain>``` that resolves to your IP so you can access ombi from anywhere thanks to the reverse proxy.
+- Ombi sends any requests to Sonarr and Radarr, which contact Jackett to query a large number of trackers.
+- Once a match is found, Sonarr and Radarr will determine if it should download it based on the quality profiles you specify and then send it off to Transmission to download.
+- After it's done downloading/seeding, Sonarr or Radarr will link it to the Plex media folder and notify Ombi that it's ready on Plex.
+- Tautulli is used for Plex analytics, such as which users have watched the most content, what kind of content, and a bunch of other useful data.
+
 ## Built With
 - [jwilder/nginx-proxy](https://github.com/jwilder/nginx-proxy)
   - Provides the dynamic reverse proxy
