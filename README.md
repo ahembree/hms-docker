@@ -1,4 +1,4 @@
-######This is my first time ever working with Docker and this size/complexity of bash script, pls be nice and help me learn the correct or more efficient way of doing things.
+###### This is my first time ever working with Docker and this size/complexity of bash script, pls be nice and help me learn the correct or more efficient way of doing things.
 
 # HMS Docker
 Uses docker-compose to bring up the following containers to host an orchestrated home media server:
