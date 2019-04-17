@@ -60,15 +60,15 @@ install_docker () {
   echo "${green}docker-compose installed${reset}"
   check_if_docker_group
   dockerAPIVersion=$(run_as_docker "docker version | awk 'NR==3{print $3; exit}' | grep -o '[0-9.]\+'")
-  if [[ "$NETWORKSHAREDRIVER" == "cifs" ]] ; then
+  if [[ "${NETWORKSHAREDRIVER,,}" == "cifs" ]] ; then
     if [[ $(apt list --installed | grep -c cifs-utils) == 0 ]] ; then
-      echo "${yellow}Installing ${NETWORKSHAREDRIVER}-utils${reset}"
+      echo "${yellow}Installing ${NETWORKSHAREDRIVER,,}-utils${reset}"
       sudo apt-get install cifs-utils -y >/dev/null
     fi
   fi
-  if [[ "$NETWORKSHAREDRIVER" == "nfs" ]] ; then
+  if [[ "${NETWORKSHAREDRIVER,,}" == "nfs" ]] ; then
     if [[ $(apt list --installed | grep -c nfs-common) == 0 ]] ; then
-      echo "${yellow}Installing ${NETWORKSHAREDRIVER}-common${reset}"
+      echo "${yellow}Installing ${NETWORKSHAREDRIVER,,}-common${reset}"
       sudo apt-get install nfs-common -y >/dev/null
     fi
   fi
