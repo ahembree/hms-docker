@@ -104,7 +104,8 @@ install_docker () {
     if [[ $(sudo apt-key fingerprint 0EBFCD88) ]]; then
       echo "${green}Docker GPG key verified${reset}"
     elif [[ ! $(sudo apt-key fingerprint 0EBFCD88) ]]; then
-      echo "${red}Docker GPG key verification failed!${reset}"
+      echo "${red}Docker GPG key verification failed! Cannot find GPG key.${reset}"
+      exit
     fi
   else
     echo "${green}Docker GPG key already exists${reset}"
