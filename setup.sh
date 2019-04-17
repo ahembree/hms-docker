@@ -90,7 +90,7 @@ check_if_docker_group () {
 install_docker () {
   echo "${yellow}Updating apt, please input your password (if prompted):${reset}"
   sudo apt-get -qq update
-  if [[ $(apt list --installed | grep -c docker) -ge 1 ]] ; then
+  if [[ $(apt list --installed | grep -c 'docker\|docker-engine\|docker.io\|containerd\|runc') -ge 1 ]] ; then
     echo "${yellow}Removing old Docker install...${reset}"
     sudo apt-get -qq -y remove docker docker-engine docker.io containerd runc
   fi
