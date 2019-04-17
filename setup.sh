@@ -16,6 +16,51 @@ jackett
 transmission
 )
 
+declare -A req_vars=(
+[DATAFOLDERenv]=${DATAFOLDER}
+[LOCALDATAenv]=${LOCALDATA}
+[CREDENTIALFILEenv]=${CREDENTIALFILE}
+[LOCALDOMAINenv]=${LOCALDOMAIN}
+[RESTARTPOLICYenv]=${RESTARTPOLICY}
+[VPNUSERenv]=${VPNUSER}
+[VPNPASSenv]=${VPNPASS}
+[VPNPROVIDERenv]=${VPNPROVIDER}
+[PLEX_CLAIMenv]=${PLEX_CLAIM}
+[TZenv]=${TZ}
+[PUIDenv]=${PUID}
+[PGIDenv]=${PGID}
+)
+
+declare -A network_share_reqs=(
+[NETWORKSHAREDRIVERenv]=${NETWORKSHAREDRIVER}
+[NETWORKSHAREHOSTenv]=${NETWORKSHAREHOST}
+[NETWORKSHAREUSERenv]=${NETWORKSHAREUSER}
+[NETWORKSHAREPASSenv]=${NETWORKSHAREPASS}
+)
+
+check_req_vars () {
+  for requirement in "${!req_vars[@]}"; do
+    if [[ ! ${req_vars[$requirement]} ]] ; then
+      echo "${red}$requirement ${yellow}is required in the .env file.${reset}" | sed 's/env*//'
+      ((reqFlag+=1))
+    elif [[ "$requirement" == "LOCALDATAenv" ]] && [[ ! "${req_vars[$requirement]}" == "" ]]; then
+      if [[ "${req_vars[$requirement]}" == "false" ]]; then
+        for netRequirement in "${!network_share_reqs[@]}"; do
+          if [[ ! ${network_share_reqs[$netRequirement]} ]]; then
+            echo "${red}$netRequirement ${yellow}is required in the .env file to use network shares.${reset}" | sed 's/env*//'
+            ((reqFlag+=1))
+          fi
+        done
+      elif [[ "${req_vars[$requirement]}" == "true" ]]; then
+        echo "${yellow}Using Local data folder${reset}"
+      fi
+    fi
+  done
+  if [[ $reqFlag -ge 1 ]]; then
+    exit
+  fi
+}
+
 run_as_docker() {
   sg docker -c "$@"
 }
@@ -79,6 +124,7 @@ if [[ "$(uname)" == "Darwin" ]] ; then
   echo "Simply running ${green}docker-compose up -d${reset} will start the containers once you have the required dependencies installed."
 elif [[ "$(uname)" == "Linux" ]] ; then
   echo "Running Linux, specifically" $(lsb_release -ds)
+  check_req_vars
   privateIP=$(hostname -I | awk '{print $1; exit}')
   publicIP=$(wget -qO - icanhazip.com)
   install_docker
