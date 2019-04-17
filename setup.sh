@@ -148,17 +148,16 @@ install_docker () {
 }
 
 config_network_share () {
-  echo -e username=$NETWORKSHAREUSER | sudo tee -a ${CREDENTIALFILE} >/dev/null
-  echo -e password=$NETWORKSHAREPASS | sudo tee -a ${CREDENTIALFILE} >/dev/null
-  sudo chown $USER:$USER ${CREDENTIALFILE}
-  sudo chmod 600 ${CREDENTIALFILE}
-  echo "${yellow}Your network share credentials are now stored in ${CREDENTIALFILE}${reset}"
-  echo "${red}CAREFUL: THESE ARE STORED IN PLAINTEXT${reset}"
   echo "${yellow}Mounting network share..."
-
   if [[ $(grep -c "${NETWORKSHAREHOST}" "/etc/fstab") == 0 ]] ; then
       echo "# HMS-Docker Mount" | sudo tee -a /etc/fstab >/dev/null
       if [[ ${NETWORKSHAREDRIVER,,} == "cifs" ]] ; then
+        echo -e username=$NETWORKSHAREUSER | sudo tee -a ${CREDENTIALFILE} >/dev/null
+        echo -e password=$NETWORKSHAREPASS | sudo tee -a ${CREDENTIALFILE} >/dev/null
+        sudo chown $USER:$USER ${CREDENTIALFILE}
+        sudo chmod 600 ${CREDENTIALFILE}
+        echo "${yellow}Your network share credentials are now stored in ${CREDENTIALFILE}${reset}"
+        echo "${red}CAREFUL: THESE ARE STORED IN PLAINTEXT${reset}"
         echo "//${NETWORKSHAREHOST} ${DATAFOLDER} ${NETWORKSHAREDRIVER,,} vers=3.0,credentials=${CREDENTIALFILE},uid=$USER,gid=$USER 0 0" | sudo tee -a /etc/fstab >/dev/null
       elif [[ ${NETWORKSHAREDRIVER,,} == "nfs" ]] ; then
         if [[ ${NFSOPTIONS} ]]; then
