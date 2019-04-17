@@ -55,8 +55,7 @@ The Transmission container from ```haugene/docker-transmission-openvpn``` also i
 2. Define the domain you want to use in the ```.env``` file under ```LOCALDOMAIN``` (default is ```.local```).
 3. Input your VPN info under ```VPNUSER``` and ```VPNPASS``` in the ```.env``` file, as well as the ```VPNPROVIDER``` if your VPN subscription is supported. [Check here](https://github.com/haugene/docker-transmission-openvpn#supported-providers).
 4. Visit https://plex.tv/claim to obtain your ```PLEX_CLAIM``` token and input this in the ```.env``` file.
-5. Comment out or delete the ```NORDVPN``` environment entries under the ```transmission``` container if you do not use NordVPN.
-6. Change your timezone in the ```.env``` if you are not in the ```America/New_York``` timezone.
+5. Change your timezone in the ```.env``` if you are not in the ```America/New_York``` timezone.
 
 To run in the background as detached after container startup:
 ```
