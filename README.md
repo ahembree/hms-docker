@@ -1,4 +1,4 @@
-This is my first time ever working with Docker and this size/complexity of bash script, pls be nice and help me learn the correct or more efficient way of doing things.
+######This is my first time ever working with Docker and this size/complexity of bash script, pls be nice and help me learn the correct or more efficient way of doing things.
 
 # HMS Docker
 Uses docker-compose to bring up the following containers to host an orchestrated home media server:
@@ -11,7 +11,7 @@ Uses docker-compose to bring up the following containers to host an orchestrated
 - Transmission/OpenVPN with a HTTP Proxy
 - Reverse Proxy
 
-## Getting Started
+## Getting Started with the setup script:
 1. Define the path you want to use to store all data in ```.env``` after ```DATAFOLDER``` (default is ```/mnt/hms-docker_data```).
 2. Define if you're using a network share or not by setting ```USINGNETWORKSHARE``` to ```true``` or ```false```.
 3. Define the domain you want to use in the ```.env``` file under ```LOCALDOMAIN``` (default is ```.local```).
@@ -28,12 +28,14 @@ Uses docker-compose to bring up the following containers to host an orchestrated
 
 If this is a fresh install of Ubuntu 18.04, just run ```setup.sh``` and it'll automatically remove old versions of Docker (if installed), add GPG keys and new Docker repo and install Docker, install docker-compose, mount a network share (CIFS or NFS) on boot by adding to ```/etc/fstab```, also appends the IP and hostname of containers to ```/etc/hosts``` (if you enter Y when prompted).
 
-To run in the background as detached after container startup:
+
+## If you already have a Docker environment setup:
+1. Modify the entries in .env as described above to adapt it to your environment (such as ```DATAFOLDER``` and ```LOCALDOMAIN```)
+2. To run in the background as detached after container startup:
 ```
 $ docker-compose up -d
 ```
-
-To run with container output for a bit of debugging:
+3. To run with container output for a bit of debugging (will kill containers on CTRL+C):
 ```
 $ docker-compose up
 ```
