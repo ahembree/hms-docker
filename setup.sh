@@ -8,12 +8,11 @@ reset=`tput sgr0`
 if [[ ! -d "$(pwd)/.env" ]] ; then
   cp "$(pwd)/.env.example" "$(pwd)/.env"
   echo "${yellow}You did not have a .env file, so the example has been copied.${reset}"
-  echo "${yellow}Please modify your .env file with the correct info.${reset}"
+  echo "${yellow}Please modify your .env file with the correct info, then run this script again.${reset}"
   exit
-else
+elif [[ -d "$(pwd)/.env" ]] ; then
   source .env
   echo "${green}Found .env and sourced${reset}"
-  exit
 fi
 
 hostnameList=(
