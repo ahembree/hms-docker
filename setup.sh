@@ -28,7 +28,7 @@ transmission
 
 declare -A req_vars=(
 [DATAFOLDERenv]=${DATAFOLDER}
-[LOCALDATAenv]=${LOCALDATA}
+[USINGNETWORKSHAREenv]=${LOCALDATA}
 [CREDENTIALFILEenv]=${CREDENTIALFILE}
 [LOCALDOMAINenv]=${LOCALDOMAIN}
 [RESTARTPOLICYenv]=${RESTARTPOLICY}
@@ -53,8 +53,9 @@ check_req_vars () {
     if [[ ! ${req_vars[$requirement]} ]] ; then
       echo "${red}$requirement ${yellow}is required in the .env file.${reset}" | sed 's/env*//'
       ((reqFlag+=1))
-    elif [[ "$requirement" == "LOCALDATAenv" ]] && [[ ! "${req_vars[$requirement]}" == "" ]]; then
+    elif [[ "$requirement" == "USINGNETWORKSHAREenv" ]] && [[ ! "${req_vars[$requirement]}" == "" ]]; then
       if [[ "${req_vars[$requirement]}" == "false" ]]; then
+        usingShare=true
         for netRequirement in "${!network_share_reqs[@]}"; do
           if [[ ! ${network_share_reqs[$netRequirement]} ]]; then
             echo "${red}$netRequirement ${yellow}is required in the .env file to use network shares.${reset}" | sed 's/env*//'
@@ -63,6 +64,7 @@ check_req_vars () {
         done
       elif [[ "${req_vars[$requirement]}" == "true" ]]; then
         echo "${yellow}Using Local data folder${reset}"
+        usingShare=false
       fi
     fi
   done
