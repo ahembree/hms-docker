@@ -52,7 +52,7 @@ check_req_vars () {
       echo "${red}$requirement ${yellow}is required in the .env file.${reset}" | sed 's/env*//'
       ((reqFlag+=1))
     elif [[ "$requirement" == "USINGNETWORKSHAREenv" ]] && [[ ! "${req_vars[$requirement]}" == "" ]]; then
-      if [[ "${req_vars[$requirement]}" == "true" ]]; then
+      if [[ "${req_vars[$requirement,,]}" == "true" ]]; then
         usingShare=true
         for netRequirement in "${!network_share_reqs[@]}"; do
           if [[ ! ${network_share_reqs[$netRequirement]} ]]; then
@@ -60,8 +60,8 @@ check_req_vars () {
             ((reqFlag+=1))
           fi
         done
-      elif [[ "${req_vars[$requirement]}" == "false" ]]; then
-        echo "${yellow}Using Local data folder${reset}"
+      elif [[ "${req_vars[$requirement,,]}" == "false" ]]; then
+        echo "${yellow}Using Local data folder ${DATAFOLDER}${reset}"
         usingShare=false
       fi
     fi
