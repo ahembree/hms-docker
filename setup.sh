@@ -178,7 +178,21 @@ elif [[ "$(uname)" == "Linux" ]] ; then
     sudo chmod 775 ${DATAFOLDER}
   fi
   if [[ $usingShare == true ]]; then
-    config_network_share
+    if ping -c 4 ${NETWORKSHAREHOST%%/*} > /dev/null; then
+      echo "${green}${NETWORKSHAREHOST} is online${reset}"
+      config_network_share
+    else
+      echo "${red}Unable to ping host ${NETWORKSHAREHOST}${reset}"
+      while [[ true ]]; do
+        read -p "If this is intentional due to a firewall, press Y, otherwise press N [y/n] \n(If you don't know, press N): " pingFailure
+        if [[ ${pingFailure,,} == "y" ]]; then
+          config_network_share
+          break
+        elif [[ ${pingFailure,,} == "n" ]]; then
+          exit
+        fi
+      done
+    fi
   fi
   runningContainers=$(run_as_docker "docker ps | awk 'NR==2{print $2; exit}'")
   echo
