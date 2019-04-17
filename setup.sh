@@ -94,10 +94,13 @@ elif [[ "$(uname)" == "Linux" ]] ; then
   echo "${yellow}Your network share credentials are now stored in ${CREDENTIALFILE}${reset}"
   echo "${red}CAREFUL: THESE ARE STORED IN PLAINTEXT${reset}"
   echo "${yellow}Mounting network share..."
-  # sudo mount -t ${NETWORKSHAREDRIVER} -o vers=3.0,credentials=${CREDENTIALFILE},uid=$USER,gid=$USER //${NETWORKSHAREHOST} ${DATAFOLDER} && echo "${green}Network share mounted. Mounting on boot..."
   if [[ $(grep -c "${NETWORKSHAREHOST}" "/etc/fstab") == 0 ]] ; then
       echo "# HMS-Docker Mount" | sudo tee -a /etc/fstab >/dev/null
-      echo "//${NETWORKSHAREHOST} ${DATAFOLDER} ${NETWORKSHAREDRIVER} vers=3.0,credentials=${CREDENTIALFILE},uid=$USER,gid=$USER 0 0" | sudo tee -a /etc/fstab >/dev/null
+      if [[ ${NETWORKSHAREDRIVER,,} == "cifs" ]] ; then
+        echo "//${NETWORKSHAREHOST} ${DATAFOLDER} ${NETWORKSHAREDRIVER,,} vers=3.0,credentials=${CREDENTIALFILE},uid=$USER,gid=$USER 0 0" | sudo tee -a /etc/fstab >/dev/null
+      elif [[ ${NETWORKSHAREDRIVER,,} == "nfs" ]] ; then
+
+      fi
       sudo mount -a
       echo "${green}fstab entry created, will mount ${yellow}${NETWORKSHAREHOST}${green} to ${yellow}${DATAFOLDER}${green} on boot.${reset}"
   elif [[ $(grep -c "${NETWORKSHAREHOST}" "/etc/fstab") -ge 1 ]] ; then
