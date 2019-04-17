@@ -5,12 +5,12 @@ green=`tput setaf 2`
 yellow=`tput setaf 3`
 reset=`tput sgr0`
 
-if [[ ! -d "$(pwd)/.env" ]] ; then
+if [[ ! -f "$(pwd)/.env" ]] ; then
   cp "$(pwd)/.env.example" "$(pwd)/.env"
   echo "${yellow}You did not have a .env file, so the example has been copied.${reset}"
   echo "${yellow}Please modify your .env file with the correct info, then run this script again.${reset}"
   exit
-elif [[ -d "$(pwd)/.env" ]] ; then
+elif [[ -f "$(pwd)/.env" ]] ; then
   source .env
   echo "${green}Found .env and sourced${reset}"
 fi
