@@ -1,0 +1,220 @@
+version: '3'
+services:
+  nginx:
+    image: jwilder/nginx-proxy
+    container_name: nginx
+    restart: ${RESTARTPOLICY}
+    networks:
+      - torrent_net
+      - plex_net
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+
+  transmission:
+    image: haugene/transmission-openvpn
+    container_name: transmission
+    restart: ${RESTARTPOLICY}
+    depends_on:
+      - nginx
+    networks:
+      - torrent_net
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    ports:
+      - 9091:9091
+      - 8888:8888
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    volumes:
+      - ${DATAFOLDER}/transmission:/data
+    environment:
+      - OPENVPN_PROVIDER=${VPNPROVIDER}
+      - OPENVPN_USERNAME=${VPNUSER}
+      - OPENVPN_PASSWORD=${VPNPASS}
+      - OPENVPN_OPTS=--inactive 3600 --ping 10 --ping-exit 60
+      - HEALTH_CHECK_HOST=google.com
+      - TZ=${TZ}
+      - WEBPROXY_ENABLED=true
+      - WEBPROXY_PORT=8888
+      - VIRTUAL_HOST=transmission.${LOCALDOMAIN}
+      - VIRTUAL_PORT=9091
+
+  proxy:
+    image: haugene/transmission-openvpn-proxy
+    container_name: proxy
+    restart: ${RESTARTPOLICY}
+    networks:
+      - torrent_net
+    depends_on:
+      - transmission
+    environment:
+      - TZ=${TZ}
+      - VIRTUAL_HOST=proxy.${LOCALDOMAIN}
+      - VIRTUAL_PORT=8080
+    ports:
+      - 8080:8080
+
+  jackett:
+    image: linuxserver/jackett
+    container_name: jackett
+    restart: ${RESTARTPOLICY}
+    depends_on:
+      - nginx
+      - proxy
+    networks:
+      - torrent_net
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - VIRTUAL_HOST=jackett.${LOCALDOMAIN}
+    volumes:
+      # folder where config will be stored
+      - ${DATAFOLDER}/jackett/config:/config
+      # not entirely sure what this folder does, I think it's for torrents you decide to download through Jackett, but you have Sonarr and Radarr for that
+      - ${DATAFOLDER}/jackett/blackhole:/downloads
+    ports:
+      - 9117:9117
+
+  sonarr:
+    image: linuxserver/sonarr
+    container_name: sonarr
+    restart: ${RESTARTPOLICY}
+    networks:
+      - torrent_net
+    depends_on:
+      - transmission
+      - jackett
+      - nginx
+      - plex
+      - proxy
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - VIRTUAL_HOST=sonarr.${LOCALDOMAIN}
+    volumes:
+      # folder where config will be stored
+      - ${DATAFOLDER}/sonarr/config:/config
+      # plex series folder location
+      - ${DATAFOLDER}/MEDIA/tv:/tv
+      # completed downloads location
+      - ${DATAFOLDER}/transmission/completed:/data/completed
+    ports:
+      - 8989:8989
+
+  radarr:
+    image: linuxserver/radarr
+    container_name: radarr
+    restart: ${RESTARTPOLICY}
+    networks:
+      - torrent_net
+    depends_on:
+      - transmission
+      - jackett
+      - nginx
+      - plex
+      - proxy
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - VIRTUAL_HOST=radarr.${LOCALDOMAIN}
+    volumes:
+      # folder where config will be stored
+      - ${DATAFOLDER}/radarr/config:/config
+      # plex movie folder location
+      - ${DATAFOLDER}/MEDIA/movies:/movies
+      # completed downloads location
+      - ${DATAFOLDER}/transmission/completed:/data/completed
+    ports:
+      - 7878:7878
+
+  ombi:
+    image: linuxserver/ombi
+    container_name: ombi
+    restart: ${RESTARTPOLICY}
+    depends_on:
+      - sonarr
+      - radarr
+      - plex
+      - nginx
+    networks:
+      - plex_net
+      - torrent_net
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - VIRTUAL_HOST=ombi.${LOCALDOMAIN}
+    volumes:
+      # folder where config will be stored
+      - ${DATAFOLDER}/ombi/config:/config
+    ports:
+      - 3579:3579
+
+  plex:
+    image: plexinc/pms-docker
+    container_name: plex
+    restart: ${RESTARTPOLICY}
+    depends_on:
+      - nginx
+    networks:
+      - plex_net
+    ports:
+      - 32400:32400/tcp
+      - 3005:3005/tcp
+      - 8324:8324/tcp
+      - 32469:32469/tcp
+      - 1900:1900/udp
+      - 32410:32410/udp
+      - 32412:32412/udp
+      - 32413:32413/udp
+      - 32414:32414/udp
+    environment:
+      - TZ=${TZ}
+      - PLEX_CLAIM=${PLEX_CLAIM}
+      - ADVERTISE_IP=http://0.0.0.0:32400/
+      - VIRTUAL_HOST=plex.${LOCALDOMAIN}
+      - VIRTUAL_PORT=32400
+    hostname: plex-docker
+    volumes:
+      # folder where config will be stored
+      - ${DATAFOLDER}/plex/config:/config
+      # temp folder for Plex transcoding
+      - ${DATAFOLDER}/plex/temp:/transcode
+      # media folder where all movies and series are stored
+      - ${DATAFOLDER}/MEDIA:/data
+
+  tautulli:
+    image: tautulli/tautulli
+    container_name: tautulli
+    restart: ${RESTARTPOLICY}
+    depends_on:
+      - plex
+      - nginx
+    networks:
+      - plex_net
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - VIRTUAL_HOST=tautulli.${LOCALDOMAIN}
+    ports:
+      - 8181:8181
+    volumes:
+      # folder where config will be stored
+      - ${DATAFOLDER}/tautulli/config:/config
+      # Plex logs location
+      - ${DATAFOLDER}/plex/config/Library/Application Support/Plex Media Server/Logs:/plex_logs:ro
+
+networks:
+  torrent_net:
+    driver: bridge
+  plex_net:
+    driver: bridge
