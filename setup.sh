@@ -88,24 +88,35 @@ check_if_docker_group () {
 }
 
 install_docker () {
-  echo "${yellow}Updating apt, please input your password:${reset}"
-  sudo apt-get update >/dev/null
+  echo "${yellow}Updating apt, please input your password (if prompted):${reset}"
+  sudo apt-get -qq update
   if [[ $(apt list --installed | grep -c docker) -ge 1 ]] ; then
     echo "${yellow}Removing old Docker install...${reset}"
-    sudo apt-get remove docker docker-engine docker.io containerd runc -y >/dev/null
+    sudo apt-get -qq -y remove docker docker-engine docker.io containerd runc
   fi
   echo "${yellow}Installing Docker dependencies...${reset}"
-  sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common -y >/dev/null
-  echo "${yellow}Adding Docker GPG key...${reset}"
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-  echo "${yellow}Adding key fingerprint...${reset}"
-  sudo apt-key fingerprint 0EBFCD88
-  echo "${yellow}Adding Docker repo...${reset}"
-  sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" >/dev/null
-  echo "${yellow}Updating apt...${reset}"
-  sudo apt-get update >/dev/null
+  sudo apt-get -qq -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+  echo "${yellow}Checking for Docker GPG key...${reset}"
+  if [[ ! $(sudo apt-key fingerprint 0EBFCD88) ]]; then
+    echo "${yellow}Adding Docker GPG key...${reset}"
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+    echo "${yellow}Verifying key fingerprint...${reset}"
+    if [[ $(sudo apt-key fingerprint 0EBFCD88) ]]; then
+      echo "${green}Docker GPG key verified${reset}"
+    elif [[ ! $(sudo apt-key fingerprint 0EBFCD88) ]]; then
+      echo "${red}Docker GPG key verification failed!${reset}"
+    fi
+  else
+    echo "${green}Docker GPG key already exists${reset}"
+  fi
+  if [[ $(cat /etc/apt/sources.list | grep -c "deb \[arch=amd64\] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable") == 0 ]]; then
+    echo "${yellow}Adding Docker repo...${reset}"
+    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" >/dev/null
+    echo "${yellow}Updating apt...${reset}"
+    sudo apt-get update >/dev/null
+  fi
   echo "${yellow}Installing Docker...${reset}"
-  sudo apt-get install docker-ce docker-ce-cli containerd.io -y >/dev/null \
+  sudo apt-get -qq -y install docker-ce docker-ce-cli containerd.io \
     && sudo systemctl start docker >/dev/null \
     && sudo systemctl enable docker >/dev/null \
     && echo "${green}Docker installed and enabled on boot${reset}"
