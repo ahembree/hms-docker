@@ -121,10 +121,15 @@ install_docker () {
     && sudo systemctl start docker >/dev/null \
     && sudo systemctl enable docker >/dev/null \
     && echo "${green}Docker installed and enabled on boot${reset}"
-  echo "${yellow}Installing docker-compose...${reset}"
-  sudo curl -L "https://github.com/docker/compose/releases/download/1.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose >/dev/null \
-    && sudo chmod +x /usr/local/bin/docker-compose >/dev/null
-  echo "${green}docker-compose installed${reset}"
+  echo "${yellow}Checking for docker-compose..."
+  if [[ ! -f "/usr/local/bin/docker-compose" ]]; then
+    echo "${yellow}Installing docker-compose...${reset}"
+    sudo curl -L "https://github.com/docker/compose/releases/download/1.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose >/dev/null \
+      && sudo chmod +x /usr/local/bin/docker-compose >/dev/null
+    echo "${green}docker-compose installed${reset}"
+  elif [[ -f "/usr/local/bin/docker-compose" ]]; then
+    echo "${green}docker-compose already installed${reset}"
+  fi
   check_if_docker_group
   dockerAPIVersion=$(run_as_docker "docker version | awk 'NR==3{print $3; exit}' | grep -o '[0-9.]\+'")
   if [[ $usingShare == true ]]; then
