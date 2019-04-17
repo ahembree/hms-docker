@@ -1,5 +1,5 @@
 # HMS Docker
-Uses docker-compose to bring up the following containers to host an automated Plex server bundle:
+Uses docker-compose to bring up the following containers to host an orchestrated home media server:
 - Plex
 - Tautulli
 - Ombi
@@ -15,8 +15,6 @@ On boot, the reverse proxy powered by ```jwilder/nginx-proxy``` obtains the IPs 
 **It is _highly_ recommended that you use a static IP for the docker host machine.**
 
 You will need to update your DNS to point all A records for these hostnames towards the docker host IP, the reverse proxy will handle the rest by serving the data on port 80.
-
-
 
 **If you _do not want_ to update your DNS**, you can still access the services by going to ```<docker host IP>:<port of service>```, or you can create a single "catch all" A record (e.g. ```hms-docker.local```) pointing towards the docker host IP and then specifying the port afterwards (```hms-docker.local:<port>```), the ports for services are listed below:
 
@@ -48,7 +46,7 @@ Supported ```<container_name>```'s are:
 
 Or you can create the single "catch all" record in this ```hosts``` file and just specify the port as mentioned above.
 
-**A list of ```/etc/hosts``` entries will be generated after running ```setup.sh``` so you can easily copy and paste if you choose to go this route of updating your ```hosts``` file**
+**You will be given the option to append these to your ```/etc/hosts``` file when running the script. Just enter Y or N when prompted. They will also be printed out so you can copy and paste if needed.**
 
 The Transmission container from ```haugene/docker-transmission-openvpn``` also includes an OpenVPN client as well as a HTTP proxy (running on port 8888 of the transmission container) for other containers to route traffic through the VPN. You can find all supported VPN providers and configurations at https://github.com/haugene/docker-transmission-openvpn.
 
