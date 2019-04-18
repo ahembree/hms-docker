@@ -7,10 +7,14 @@ reset=`tput sgr0`
 
 if [[ ! -f "$(pwd)/.env" ]] ; then
   cp "$(pwd)/.env.example" "$(pwd)/.env"
+  sudo chown $USER:$USER "$(pwd)/.env"
+  sudo chmod 600 "$(pwd)/.env"
   echo "${yellow}You did not have a .env file, so the example has been copied.${reset}"
   echo "${yellow}Please modify your .env file with the correct info, then run this script again.${reset}"
   exit
 elif [[ -f "$(pwd)/.env" ]] ; then
+  sudo chown $USER:$USER "$(pwd)/.env"
+  sudo chmod 600 "$(pwd)/.env"
   source .env
   echo "${green}Found .env and sourced${reset}"
 fi
@@ -46,6 +50,7 @@ declare -A network_share_reqs=(
 [NETWORKSHAREUSERenv]=${NETWORKSHAREUSER}
 [NETWORKSHAREPASSenv]=${NETWORKSHAREPASS}
 )
+
 check_req_vars () {
   for requirement in "${!req_vars[@]}"; do
     if [[ ! ${req_vars[$requirement]} ]] ; then
