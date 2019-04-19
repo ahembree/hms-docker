@@ -179,7 +179,6 @@ services:
     environment:
       - TZ=${TZ}
       - PLEX_CLAIM=${PLEX_CLAIM}
-      - ADVERTISE_IP=http://0.0.0.0:32400/
       - VIRTUAL_HOST=plex.${LOCALDOMAIN}
       - VIRTUAL_PORT=32400
     hostname: plex-docker
