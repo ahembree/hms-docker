@@ -158,7 +158,13 @@ config_network_share () {
         sudo chmod 600 ${CREDENTIALFILE}
         echo "${yellow}Your network share credentials are now stored in ${CREDENTIALFILE}${reset}"
         echo "${red}CAREFUL: THESE ARE STORED IN PLAINTEXT${reset}"
-        echo "//${NETWORKSHAREHOST} ${DATAFOLDER} ${NETWORKSHAREDRIVER,,} vers=3.0,credentials=${CREDENTIALFILE},uid=$USER,gid=$USER 0 0" | sudo tee -a /etc/fstab >/dev/null
+        if [[ ${CIFSOPTIONS} ]]; then
+          echo "${yellow}Creating with CIFS options ${CIFSOPTIONS}${reset}"
+          echo "//${NETWORKSHAREHOST} ${DATAFOLDER} ${NETWORKSHAREDRIVER,,} vers=3.0,credentials=${CREDENTIALFILE},uid=$USER,gid=$USER,${CIFSOPTIONS} 0 0" | sudo tee -a /etc/fstab >/dev/null
+        elif [[ ! ${CIFSOPTIONS} ]]; then
+          echo "${yellow}No CIFS options specified, using default${reset}"
+          echo "//${NETWORKSHAREHOST} ${DATAFOLDER} ${NETWORKSHAREDRIVER,,} vers=3.0,credentials=${CREDENTIALFILE},uid=$USER,gid=$USER 0 0" | sudo tee -a /etc/fstab >/dev/null
+        fi
       elif [[ "${NETWORKSHAREDRIVER,,}" == "nfs" ]] ; then
         if [[ ${NFSOPTIONS} ]]; then
           echo "${yellow}Creating with NFS options ${NFSOPTIONS}${reset}"
