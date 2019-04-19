@@ -227,9 +227,9 @@ elif [[ "$(uname)" == "Linux" ]] ; then
   echo -e "Public IP of transmission:" ' \t' $torrentPublicIP
   echo
   if [[ $torrentPublicIP ]] ; then
-    if [[ $publicIP == $torrentPublicIP ]] ; then
+    if [[ "$publicIP" == "$torrentPublicIP" ]] ; then
       echo "${red}YOU ARE NOT PROTECTED BY THE VPN${reset}"
-    elif [[ $publicIP != $torrentPublicIP ]] ; then
+    elif [[ "$publicIP" != "$torrentPublicIP" ]] ; then
       echo "${green}You are protected!${reset}"
     fi
   else
