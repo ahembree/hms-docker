@@ -41,6 +41,7 @@ declare -A req_vars=(
 
 declare -A network_share_reqs=(
 [CREDENTIALFILEenv]=${CREDENTIALFILE}
+[MOUNTFOLDERenv]=${MOUNTFOLDER}
 [NETWORKSHAREDRIVERenv]=${NETWORKSHAREDRIVER}
 [NETWORKSHAREHOSTenv]=${NETWORKSHAREHOST}
 [NETWORKSHAREUSERenv]=${NETWORKSHAREUSER}
@@ -54,6 +55,7 @@ check_req_vars () {
     elif [[ "$requirement" == "USINGNETWORKSHAREenv" ]] && [[ ! "${req_vars[$requirement]}" == "" ]]; then
       if [[ "${req_vars[$requirement],,}" == "true" ]]; then
         usingShare=true
+        echo "${yellow}Will mount media network share to ${MOUNTFOLDER}${reset}"
         for netRequirement in "${!network_share_reqs[@]}"; do
           if [[ ! ${network_share_reqs[$netRequirement]} ]]; then
             echo "${red}$netRequirement ${yellow}is required in the .env file to use network shares.${reset}" | sed 's/env*//'
@@ -160,18 +162,18 @@ config_network_share () {
         echo "${red}CAREFUL: THESE ARE STORED IN PLAINTEXT${reset}"
         if [[ ${CIFSOPTIONS} ]]; then
           echo "${yellow}Creating with CIFS options ${CIFSOPTIONS}${reset}"
-          echo "//${NETWORKSHAREHOST} ${DATAFOLDER} ${NETWORKSHAREDRIVER,,} vers=3.0,credentials=${CREDENTIALFILE},uid=$USER,gid=$USER,${CIFSOPTIONS} 0 0" | sudo tee -a /etc/fstab >/dev/null
+          echo "//${NETWORKSHAREHOST} ${MOUNTFOLDER} ${NETWORKSHAREDRIVER,,} vers=3.0,credentials=${CREDENTIALFILE},uid=$USER,gid=$USER,${CIFSOPTIONS} 0 0" | sudo tee -a /etc/fstab >/dev/null
         elif [[ ! ${CIFSOPTIONS} ]]; then
           echo "${yellow}No CIFS options specified, using default${reset}"
-          echo "//${NETWORKSHAREHOST} ${DATAFOLDER} ${NETWORKSHAREDRIVER,,} vers=3.0,credentials=${CREDENTIALFILE},uid=$USER,gid=$USER 0 0" | sudo tee -a /etc/fstab >/dev/null
+          echo "//${NETWORKSHAREHOST} ${MOUNTFOLDER} ${NETWORKSHAREDRIVER,,} vers=3.0,credentials=${CREDENTIALFILE},uid=$USER,gid=$USER 0 0" | sudo tee -a /etc/fstab >/dev/null
         fi
       elif [[ "${NETWORKSHAREDRIVER,,}" == "nfs" ]] ; then
         if [[ ${NFSOPTIONS} ]]; then
           echo "${yellow}Creating with NFS options ${NFSOPTIONS}${reset}"
-          echo "${NETWORKSHAREHOST}:${NFSFOLDER} ${DATAFOLDER} ${NETWORKSHAREDRIVER} ${NFSOPTIONS} 0 0" | sudo tee -a /etc/fstab >/dev/null
+          echo "${NETWORKSHAREHOST}:${NFSFOLDER} ${MOUNTFOLDER} ${NETWORKSHAREDRIVER} ${NFSOPTIONS} 0 0" | sudo tee -a /etc/fstab >/dev/null
         elif [[ ! ${NFSOPTIONS} ]]; then
           echo "${yellow}No NFS options specified, using default${reset}"
-          echo "${NETWORKSHAREHOST}:${NFSFOLDER} ${DATAFOLDER} ${NETWORKSHAREDRIVER} defaults 0 0" | sudo tee -a /etc/fstab >/dev/null
+          echo "${NETWORKSHAREHOST}:${NFSFOLDER} ${MOUNTFOLDER} ${NETWORKSHAREDRIVER} defaults 0 0" | sudo tee -a /etc/fstab >/dev/null
         fi
       fi
       sudo mount -a
@@ -194,6 +196,11 @@ elif [[ "$(uname)" == "Linux" ]] ; then
     sudo mkdir -p ${DATAFOLDER} && echo "${green}${DATAFOLDER} created${reset}"
     sudo chown $USER:$USER ${DATAFOLDER}
     sudo chmod 775 ${DATAFOLDER}
+  fi
+  if [[ ! -d ${MOUNTFOLDER} ]]; then
+    sudo mkdir-p ${MOUNTFOLDER} && echo "${green}${MOUNTFOLDER} created${reset}"
+    sudo chown $USER:$USER ${MOUNTFOLDER}
+    sudo chmod 755 ${MOUNTFOLDER}
   fi
   if [[ "$usingShare" == "true" ]]; then
     if ping -c 4 ${NETWORKSHAREHOST%%/*} > /dev/null; then
@@ -269,5 +276,6 @@ elif [[ "$(uname)" == "Linux" ]] ; then
     echo "${yellow}Please logout then login again to use docker commands.${reset}"
   fi
   echo "${green}Data folder is located at ${DATAFOLDER}${reset}"
+  echo "${green}Mounted network folder is located at ${MOUNTFOLDER}${reset}"
   echo "${green}Setup complete, the contianers are now running!${reset}"
 fi
