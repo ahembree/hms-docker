@@ -197,12 +197,12 @@ elif [[ "$(uname)" == "Linux" ]] ; then
     sudo chown $USER:$USER ${DATAFOLDER}
     sudo chmod 775 ${DATAFOLDER}
   fi
-  if [[ ! -d ${MOUNTFOLDER} ]]; then
-    sudo mkdir-p ${MOUNTFOLDER} && echo "${green}${MOUNTFOLDER} created${reset}"
-    sudo chown $USER:$USER ${MOUNTFOLDER}
-    sudo chmod 755 ${MOUNTFOLDER}
-  fi
   if [[ "$usingShare" == "true" ]]; then
+    if [[ ! -d ${MOUNTFOLDER} ]]; then
+      sudo mkdir -p ${MOUNTFOLDER} && echo "${green}${MOUNTFOLDER} created${reset}"
+      sudo chown $USER:$USER ${MOUNTFOLDER}
+      sudo chmod 755 ${MOUNTFOLDER}
+    fi
     if ping -c 4 ${NETWORKSHAREHOST%%/*} > /dev/null; then
       echo "${green}${NETWORKSHAREHOST%%/*} is online${reset}"
       config_network_share
