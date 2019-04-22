@@ -28,15 +28,22 @@ services:
       - 9091:9091
       - 8888:8888
     dns:
-      - 8.8.8.8
-      - 8.8.4.4
+      - 1.1.1.1
+      - 1.0.0.1
     volumes:
       - ${DATAFOLDER}/transmission:/data
+      - ${MOUNTFOLDER}/transmission/completed:/completed
     environment:
       - OPENVPN_PROVIDER=${VPNPROVIDER}
       - OPENVPN_USERNAME=${VPNUSER}
       - OPENVPN_PASSWORD=${VPNPASS}
       - OPENVPN_OPTS=--inactive 3600 --ping 10 --ping-exit 60
+      - TRANSMISSION_WEB_UI=transmission-web-control # OPTIONAL - just a different UI
+      - TRANSMISSION_DOWNLOAD_QUEUE_SIZE=25
+      - TRANSMISSION_MAX_PEERS_GLOBAL=3000
+      - TRANSMISSION_PEER_LIMIT_GLOBAL=3000
+      - TRANSMISSION_PEER_LIMIT_PER_TORRENT=300
+      - TRANSMISSION_DOWNLOAD_DIR=/completed
       - HEALTH_CHECK_HOST=google.com
       - TZ=${TZ}
       - WEBPROXY_ENABLED=true
@@ -104,7 +111,7 @@ services:
       # plex series folder location
       - ${MOUNTFOLDER}/MEDIA/tv:/tv
       # completed downloads location
-      - ${MOUNTFOLDER}/transmission/completed:/data/completed
+      - ${MOUNTFOLDER}/transmission/completed:/completed
     ports:
       - 8989:8989
 
@@ -131,7 +138,7 @@ services:
       # plex movie folder location
       - ${MOUNTFOLDER}/MEDIA/movies:/movies
       # completed downloads location
-      - ${MOUNTFOLDER}/transmission/completed:/data/completed
+      - ${MOUNTFOLDER}/transmission/completed:/completed
     ports:
       - 7878:7878
 
@@ -184,9 +191,9 @@ services:
     hostname: plex-docker
     volumes:
       # folder where config will be stored
-      - ${DATAFOLDER}/config:/config
+      - ${DATAFOLDER}/plex/config:/config
       # temp folder for Plex transcoding
-      - ${DATAFOLDER}/temp:/transcode
+      - ${DATAFOLDER}/plex/temp:/transcode
       # media folder where all movies and series are stored
       - ${MOUNTFOLDER}/MEDIA:/data
 
