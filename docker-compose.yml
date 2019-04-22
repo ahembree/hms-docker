@@ -32,11 +32,20 @@ services:
       - 1.0.0.1
     volumes:
       - ${DATAFOLDER}/transmission:/data
+      - ${MOUNTFOLDER}/transmission/completed:/completed
     environment:
       - OPENVPN_PROVIDER=${VPNPROVIDER}
       - OPENVPN_USERNAME=${VPNUSER}
       - OPENVPN_PASSWORD=${VPNPASS}
       - OPENVPN_OPTS=--inactive 3600 --ping 10 --ping-exit 60
+      - TRANSMISSION_WEB_UI=transmission-web-control # OPTIONAL - just a different UI
+      - TRANSMISSION_DOWNLOAD_QUEUE_SIZE=25
+      - TRANSMISSION_MAX_PEERS_GLOBAL=3000
+      - TRANSMISSION_PEER_LIMIT_GLOBAL=3000
+      - TRANSMISSION_PEER_LIMIT_PER_TORRENT=300
+      - TRANSMISSION_DOWNLOAD_DIR=/completed
+      - TRANSMISSION_RATIO_LIMIT=${RATIO_LIMIT}
+      - TRANSMISSION_RATIO_LIMIT_ENABLED=${RATIO_ENABLED}
       - HEALTH_CHECK_HOST=google.com
       - TZ=${TZ}
       - WEBPROXY_ENABLED=true
@@ -77,7 +86,7 @@ services:
       # folder where config will be stored
       - ${DATAFOLDER}/jackett/config:/config
       # not entirely sure what this folder does, I think it's for torrents you decide to download through Jackett, but you have Sonarr and Radarr for that
-      - ${DATAFOLDER}/jackett/blackhole:/downloads
+      - ${MOUNTFOLDER}/jackett/blackhole:/downloads
     ports:
       - 9117:9117
 
@@ -102,9 +111,9 @@ services:
       # folder where config will be stored
       - ${DATAFOLDER}/sonarr/config:/config
       # plex series folder location
-      - ${DATAFOLDER}/MEDIA/tv:/tv
+      - ${MOUNTFOLDER}/MEDIA/tv:/tv
       # completed downloads location
-      - ${DATAFOLDER}/transmission/completed:/data/completed
+      - ${MOUNTFOLDER}/transmission/completed:/completed
     ports:
       - 8989:8989
 
@@ -129,9 +138,9 @@ services:
       # folder where config will be stored
       - ${DATAFOLDER}/radarr/config:/config
       # plex movie folder location
-      - ${DATAFOLDER}/MEDIA/movies:/movies
+      - ${MOUNTFOLDER}/MEDIA/movies:/movies
       # completed downloads location
-      - ${DATAFOLDER}/transmission/completed:/data/completed
+      - ${MOUNTFOLDER}/transmission/completed:/completed
     ports:
       - 7878:7878
 
@@ -179,7 +188,6 @@ services:
     environment:
       - TZ=${TZ}
       - PLEX_CLAIM=${PLEX_CLAIM}
-      - ADVERTISE_IP=http://0.0.0.0:32400/
       - VIRTUAL_HOST=plex.${LOCALDOMAIN}
       - VIRTUAL_PORT=32400
     hostname: plex-docker
@@ -189,7 +197,7 @@ services:
       # temp folder for Plex transcoding
       - ${DATAFOLDER}/plex/temp:/transcode
       # media folder where all movies and series are stored
-      - ${DATAFOLDER}/MEDIA:/data
+      - ${MOUNTFOLDER}/MEDIA:/data
 
   tautulli:
     image: tautulli/tautulli

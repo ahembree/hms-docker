@@ -45,6 +45,7 @@ declare -A req_vars=(
 
 declare -A network_share_reqs=(
 [CREDENTIALFILEenv]=${CREDENTIALFILE}
+[MOUNTFOLDERenv]=${MOUNTFOLDER}
 [NETWORKSHAREDRIVERenv]=${NETWORKSHAREDRIVER}
 [NETWORKSHAREHOSTenv]=${NETWORKSHAREHOST}
 [NETWORKSHAREUSERenv]=${NETWORKSHAREUSER}
@@ -57,15 +58,16 @@ check_req_vars () {
       echo "${red}$requirement ${yellow}is required in the .env file.${reset}" | sed 's/env*//'
       ((reqFlag+=1))
     elif [[ "$requirement" == "USINGNETWORKSHAREenv" ]] && [[ ! "${req_vars[$requirement]}" == "" ]]; then
-      if [[ "${req_vars[$requirement,,]}" == "true" ]]; then
+      if [[ "${req_vars[$requirement],,}" == "true" ]]; then
         usingShare=true
+        echo "${yellow}Will mount media network share to ${MOUNTFOLDER}${reset}"
         for netRequirement in "${!network_share_reqs[@]}"; do
           if [[ ! ${network_share_reqs[$netRequirement]} ]]; then
             echo "${red}$netRequirement ${yellow}is required in the .env file to use network shares.${reset}" | sed 's/env*//'
             ((reqFlag+=1))
           fi
         done
-      elif [[ "${req_vars[$requirement,,]}" == "false" ]]; then
+      elif [[ "${req_vars[$requirement],,}" == "false" ]]; then
         echo "${yellow}Using Local data folder ${DATAFOLDER}${reset}"
         usingShare=false
       fi
@@ -156,21 +158,27 @@ config_network_share () {
   echo "${yellow}Mounting network share..."
   if [[ $(grep -c "${NETWORKSHAREHOST}" "/etc/fstab") == 0 ]] ; then
       echo "# HMS-Docker Mount" | sudo tee -a /etc/fstab >/dev/null
-      if [[ ${NETWORKSHAREDRIVER,,} == "cifs" ]] ; then
+      if [[ "${NETWORKSHAREDRIVER,,}" == "cifs" ]] ; then
         echo -e username=$NETWORKSHAREUSER | sudo tee -a ${CREDENTIALFILE} >/dev/null
         echo -e password=$NETWORKSHAREPASS | sudo tee -a ${CREDENTIALFILE} >/dev/null
         sudo chown $USER:$USER ${CREDENTIALFILE}
         sudo chmod 600 ${CREDENTIALFILE}
         echo "${yellow}Your network share credentials are now stored in ${CREDENTIALFILE}${reset}"
         echo "${red}CAREFUL: THESE ARE STORED IN PLAINTEXT${reset}"
-        echo "//${NETWORKSHAREHOST} ${DATAFOLDER} ${NETWORKSHAREDRIVER,,} vers=3.0,credentials=${CREDENTIALFILE},uid=$USER,gid=$USER 0 0" | sudo tee -a /etc/fstab >/dev/null
-      elif [[ ${NETWORKSHAREDRIVER,,} == "nfs" ]] ; then
+        if [[ ${CIFSOPTIONS} ]]; then
+          echo "${yellow}Creating with CIFS options ${CIFSOPTIONS}${reset}"
+          echo "//${NETWORKSHAREHOST} ${MOUNTFOLDER} ${NETWORKSHAREDRIVER,,} vers=3.0,credentials=${CREDENTIALFILE},uid=$USER,gid=$USER,${CIFSOPTIONS} 0 0" | sudo tee -a /etc/fstab >/dev/null
+        elif [[ ! ${CIFSOPTIONS} ]]; then
+          echo "${yellow}No CIFS options specified, using default${reset}"
+          echo "//${NETWORKSHAREHOST} ${MOUNTFOLDER} ${NETWORKSHAREDRIVER,,} vers=3.0,credentials=${CREDENTIALFILE},uid=$USER,gid=$USER 0 0" | sudo tee -a /etc/fstab >/dev/null
+        fi
+      elif [[ "${NETWORKSHAREDRIVER,,}" == "nfs" ]] ; then
         if [[ ${NFSOPTIONS} ]]; then
           echo "${yellow}Creating with NFS options ${NFSOPTIONS}${reset}"
-          echo "${NETWORKSHAREHOST}:${NFSFOLDER} ${DATAFOLDER} ${NETWORKSHAREDRIVER} ${NFSOPTIONS} 0 0" | sudo tee -a /etc/fstab >/dev/null
+          echo "${NETWORKSHAREHOST}:${NFSFOLDER} ${MOUNTFOLDER} ${NETWORKSHAREDRIVER} ${NFSOPTIONS} 0 0" | sudo tee -a /etc/fstab >/dev/null
         elif [[ ! ${NFSOPTIONS} ]]; then
           echo "${yellow}No NFS options specified, using default${reset}"
-          echo "${NETWORKSHAREHOST}:${NFSFOLDER} ${DATAFOLDER} ${NETWORKSHAREDRIVER} defaults 0 0" | sudo tee -a /etc/fstab >/dev/null
+          echo "${NETWORKSHAREHOST}:${NFSFOLDER} ${MOUNTFOLDER} ${NETWORKSHAREDRIVER} defaults 0 0" | sudo tee -a /etc/fstab >/dev/null
         fi
       fi
       sudo mount -a
@@ -194,18 +202,23 @@ elif [[ "$(uname)" == "Linux" ]] ; then
     sudo chown $USER:$USER ${DATAFOLDER}
     sudo chmod 775 ${DATAFOLDER}
   fi
-  if [[ $usingShare == true ]]; then
+  if [[ "$usingShare" == "true" ]]; then
+    if [[ ! -d ${MOUNTFOLDER} ]]; then
+      sudo mkdir -p ${MOUNTFOLDER} && echo "${green}${MOUNTFOLDER} created${reset}"
+      sudo chown $USER:$USER ${MOUNTFOLDER}
+      sudo chmod 755 ${MOUNTFOLDER}
+    fi
     if ping -c 4 ${NETWORKSHAREHOST%%/*} > /dev/null; then
-      echo "${green}${NETWORKSHAREHOST} is online${reset}"
+      echo "${green}${NETWORKSHAREHOST%%/*} is online${reset}"
       config_network_share
     else
       echo "${red}Unable to ping host ${NETWORKSHAREHOST}${reset}"
       while [[ true ]]; do
         read -p "If this is intentional due to a firewall, press Y, otherwise press N [y/n] \n(If you don't know, press N): " pingFailure
-        if [[ ${pingFailure,,} == "y" ]]; then
+        if [[ "${pingFailure,,}" == "y" ]]; then
           config_network_share
           break
-        elif [[ ${pingFailure,,} == "n" ]]; then
+        elif [[ "${pingFailure,,}" == "n" ]]; then
           exit
         fi
       done
@@ -216,7 +229,7 @@ elif [[ "$(uname)" == "Linux" ]] ; then
   if [[ $runningContainers ]] ; then
     echo "${yellow}Killing docker images if they're already running...${reset}"
     for host in "${hostnameList[@]}"; do
-      if [[ $runningContainers =~ $host ]] ; then
+      if [[ "$runningContainers" =~ "$host" ]] ; then
         run_as_docker "docker-compose kill"
         echo
         break
@@ -232,9 +245,9 @@ elif [[ "$(uname)" == "Linux" ]] ; then
   echo -e "Public IP of transmission:" ' \t' $torrentPublicIP
   echo
   if [[ $torrentPublicIP ]] ; then
-    if [[ $publicIP == $torrentPublicIP ]] ; then
+    if [[ "$publicIP" == "$torrentPublicIP" ]] ; then
       echo "${red}YOU ARE NOT PROTECTED BY THE VPN${reset}"
-    elif [[ $publicIP != $torrentPublicIP ]] ; then
+    elif [[ "$publicIP" != "$torrentPublicIP" ]] ; then
       echo "${green}You are protected!${reset}"
     fi
   else
@@ -251,13 +264,13 @@ elif [[ "$(uname)" == "Linux" ]] ; then
     while true; do
       echo
       read -p "Should we append these to the /etc/hosts file for you? [y/n]: " addToHosts
-      if [[ ${addToHosts,,} == "y" ]]; then
+      if [[ "${addToHosts,,}" == "y" ]]; then
         echo -e "\n# Generated by HMS-Docker" | sudo tee -a /etc/hosts >/dev/null
         for host in "${hostnameList[@]}"; do
           echo -e $privateIP ' \t ' $host.${LOCALDOMAIN} | sudo tee -a /etc/hosts >/dev/null
         done
         break
-      elif [[ ${addToHosts,,} == "n" ]]; then
+      elif [[ "${addToHosts,,}" == "n" ]]; then
         echo "${yellow}Not adding to hosts file${red}"
         break
       fi
@@ -268,5 +281,6 @@ elif [[ "$(uname)" == "Linux" ]] ; then
     echo "${yellow}Please logout then login again to use docker commands.${reset}"
   fi
   echo "${green}Data folder is located at ${DATAFOLDER}${reset}"
+  echo "${green}Mounted network folder is located at ${MOUNTFOLDER}${reset}"
   echo "${green}Setup complete, the contianers are now running!${reset}"
 fi
