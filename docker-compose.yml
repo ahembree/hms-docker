@@ -1,16 +1,20 @@
 version: '3'
 services:
-  nginx:
-    image: jwilder/nginx-proxy
-    container_name: nginx
+  traefik:
+    image: traefik
+    container_name: traefik
     restart: ${RESTARTPOLICY}
+    ports:
+      - 80:80
+      - 443:443
     networks:
+      - web
       - torrent_net
       - plex_net
-    ports:
-      - "80:80"
     volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${DATAFOLDER}/traefik/traefik.toml:/traefik.toml
+      - ${DATAFOLDER}/traefik/acme.json:/acme.json
 
   transmission:
     image: haugene/transmission-openvpn
@@ -226,3 +230,5 @@ networks:
     driver: bridge
   plex_net:
     driver: bridge
+  web:
+    external: true
