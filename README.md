@@ -45,7 +45,7 @@ On container boot, the reverse proxy powered by ```jwilder/nginx-proxy``` obtain
 
 **It is _highly_ recommended that you use a static IP for the docker host machine.**
 
-You will need to update your DNS to point all A records for these hostnames towards the docker host IP, the reverse proxy will handle the rest by serving the data on port 80.
+You will need to update your DNS to point all A records for these hostnames towards the docker host IP, the reverse proxy will handle the rest by serving the data on port 443.
 
 **If you _do not want_ to update your DNS**, you can still access the services by going to ```<docker host IP>:<port of service>```, or you can create a single "catch all" A record (e.g. ```hms-docker.local```) pointing towards the docker host IP and then specifying the port afterwards (```hms-docker.local:<port>```), the ports for services are listed below:
 
@@ -57,6 +57,8 @@ Service ports:
 - Ombi: 3579
 - Jackett: 9117
 - Transmission: 9091
+
+**Note:** Since letsencrypt is used by default and it requires letsencrypt to validate the domain, it's required to add the environment variable [`LETSENCRYPT_TEST` set to `true`](https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/blob/master/docs/Let's-Encrypt-and-ACME.md#test-certificates) to every container that uses the `LETSENCRYPT_HOST` and `LETSENCRYPT_EMAIL`. This configuration should be added to `docker-compose.override.yml` to allow every host to have their own configuration (with valid SSL certificate or not).
 
 Although it is device-specific, you can update your ```/etc/hosts``` file (or ```C:\Windows\System32\drivers\etc\hosts``` on Windows) with the format
 ```
@@ -82,7 +84,7 @@ Or you can create the single "catch all" record in this ```hosts``` file and jus
 The Transmission container from ```haugene/docker-transmission-openvpn``` also includes an OpenVPN client as well as a HTTP proxy (running on port 8888 of the transmission container) for other containers to route traffic through the VPN. You can find all supported VPN providers and configurations at https://github.com/haugene/docker-transmission-openvpn.
 
 ## How everything connects
-- After port 80 is forwarded, update the DNS with your registrar to add a ```ombi.<TLD domain>``` that resolves to your IP so you can access ombi from anywhere thanks to the reverse proxy.
+- After port 80 and 443 are forwarded, update the DNS with your registrar to add a ```ombi.<TLD domain>``` that resolves to your IP so you can access ombi from anywhere thanks to the reverse proxy.
 - Ombi sends any requests to Sonarr and Radarr, which contact Jackett to query a large number of trackers.
 - Once a match is found, Sonarr and Radarr will determine if it should download it based on the quality profiles you specify and then send it off to Transmission to download.
 - After it's done downloading/seeding, Sonarr or Radarr will link it to the Plex media folder and notify Ombi that it's ready on Plex.
@@ -91,6 +93,8 @@ The Transmission container from ```haugene/docker-transmission-openvpn``` also i
 ## Built With
 - [jwilder/nginx-proxy](https://github.com/jwilder/nginx-proxy)
   - Provides the dynamic reverse proxy
+- [jrcs/letsencrypt-nginx-proxy-companion](https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion)
+  - Provides a companion for the nginx-proxy its configuration and generating SSL certificates.
 - [haugene/docker-transmission-openvpn](https://github.com/haugene/docker-transmission-openvpn)
   - Provides Transmission, OpenVPN client, and the HTTP proxy that routes through the VPN.
 - [linuxserver/sonarr](https://hub.docker.com/r/linuxserver/sonarr)
