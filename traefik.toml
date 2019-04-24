@@ -1,9 +1,12 @@
 debug = false
 
 logLevel = "ERROR"
+
 defaultEntryPoints = ["https","http"]
 
 [entryPoints]
+  [entryPoints.dashboard]
+    address = ":8080"
   [entryPoints.http]
   address = ":80"
     [entryPoints.http.redirect]
@@ -12,18 +15,22 @@ defaultEntryPoints = ["https","http"]
   address = ":443"
   [entryPoints.https.tls]
 
+[api]
+entrypoint="dashboard"
+
 [retry]
 
-[docker]
-endpoint = "unix:///var/run/docker.sock"
-domain = "my-awesome-app.org"
-watch = true
-exposedByDefault = false
-
 [acme]
-email = "your-email-here@my-awesome-app.org"
+email = "your-email-here"
 storage = "acme.json"
 entryPoint = "https"
 onHostRule = true
-[acme.httpChallenge]
-entryPoint = "http"
+  [acme.httpChallenge]
+    entryPoint = "http"
+
+[docker]
+endpoint = "unix:///var/run/docker.sock"
+domain = "your-domain-here"
+watch = true
+exposedByDefault = false
+network = "web"
