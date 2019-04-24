@@ -231,4 +231,4 @@ networks:
   plex_net:
     driver: bridge
   web:
-    external: true
+    driver: bridge
