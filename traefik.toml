@@ -33,4 +33,4 @@ endpoint = "unix:///var/run/docker.sock"
 domain = "your-domain-here"
 watch = true
 exposedByDefault = false
-network = "web"
+network = "hms-docker_web"
