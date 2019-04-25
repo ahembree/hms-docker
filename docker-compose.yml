@@ -1,5 +1,23 @@
 version: '3'
 services:
+  portainer:
+    image: portainer/portainer
+    container_name: portainer
+    command: -H unix:///var/run/docker.sock
+    restart: ${RESTARTPOLICY}
+    networks:
+      - web
+    ports:
+      - 9000:9000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ${DATAFOLDER}/portainer:/data
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=Host:portainer.${LOCALDOMAIN}
+      - traefik.port=9000
+      - traefik.frontend.entryPoints=http
+
   traefik:
     image: traefik
     container_name: traefik
@@ -15,7 +33,7 @@ services:
       - ${DATAFOLDER}/traefik/traefik.toml:/traefik.toml:ro
       - ${DATAFOLDER}/traefik/acme.json:/acme.json
     labels:
-      - traefik.enable=false
+      - traefik.enable=true
       - traefik.frontend.rule=Host:traefik.${LOCALDOMAIN}
       - traefik.port=8080
       - traefik.frontend.entryPoints=http
