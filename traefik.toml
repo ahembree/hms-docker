@@ -8,12 +8,10 @@ defaultEntryPoints = ["https","http"]
   [entryPoints.dashboard]
     address = ":8080"
   [entryPoints.http]
-  address = ":80"
-    [entryPoints.http.redirect]
-    entryPoint = "https"
+    address = ":80"
   [entryPoints.https]
-  address = ":443"
-  [entryPoints.https.tls]
+    address = ":443"
+    [entryPoints.https.tls]
 
 [api]
 entrypoint="dashboard"
