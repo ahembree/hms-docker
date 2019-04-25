@@ -1,23 +1,31 @@
 version: '3'
 services:
-  nginx:
-    image: jwilder/nginx-proxy
-    container_name: nginx
+  traefik:
+    image: traefik
+    container_name: traefik
     restart: ${RESTARTPOLICY}
-    networks:
-      - torrent_net
-      - plex_net
     ports:
-      - "80:80"
+      - 80:80
+      - 443:443
+      - 8080:8080
+    networks:
+      - web
     volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ${DATAFOLDER}/traefik/traefik.toml:/traefik.toml:ro
+      - ${DATAFOLDER}/traefik/acme.json:/acme.json
+    labels:
+      - traefik.enable=false
+      - traefik.frontend.rule=Host:traefik.${LOCALDOMAIN}
+      - traefik.port=8080
+      - traefik.frontend.entryPoints=http
 
   transmission:
     image: haugene/transmission-openvpn
     container_name: transmission
     restart: ${RESTARTPOLICY}
     depends_on:
-      - nginx
+      - traefik
     networks:
       - torrent_net
     cap_add:
@@ -50,8 +58,6 @@ services:
       - TZ=${TZ}
       - WEBPROXY_ENABLED=true
       - WEBPROXY_PORT=8888
-      - VIRTUAL_HOST=transmission.${LOCALDOMAIN}
-      - VIRTUAL_PORT=9091
 
   proxy:
     image: haugene/transmission-openvpn-proxy
@@ -59,29 +65,33 @@ services:
     restart: ${RESTARTPOLICY}
     networks:
       - torrent_net
+      - web
     depends_on:
       - transmission
     environment:
       - TZ=${TZ}
-      - VIRTUAL_HOST=proxy.${LOCALDOMAIN}
-      - VIRTUAL_PORT=8080
     ports:
-      - 8080:8080
+      - 8081:8080
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=Host:transmission.${LOCALDOMAIN}
+      - traefik.port=8080
+      - traefik.frontend.entryPoints=http
 
   jackett:
     image: linuxserver/jackett
     container_name: jackett
     restart: ${RESTARTPOLICY}
     depends_on:
-      - nginx
+      - traefik
       - proxy
     networks:
       - torrent_net
+      - web
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
-      - VIRTUAL_HOST=jackett.${LOCALDOMAIN}
     volumes:
       # folder where config will be stored
       - ${DATAFOLDER}/jackett/config:/config
@@ -89,6 +99,11 @@ services:
       - ${MOUNTFOLDER}/jackett/blackhole:/downloads
     ports:
       - 9117:9117
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=Host:jackett.${LOCALDOMAIN}
+      - traefik.port=9117
+      - traefik.frontend.entryPoints=http
 
   sonarr:
     image: linuxserver/sonarr
@@ -96,17 +111,22 @@ services:
     restart: ${RESTARTPOLICY}
     networks:
       - torrent_net
+      - web
     depends_on:
       - transmission
       - jackett
-      - nginx
+      - traefik
       - plex
       - proxy
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
-      - VIRTUAL_HOST=sonarr.${LOCALDOMAIN}
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=Host:sonarr.${LOCALDOMAIN}
+      - traefik.port=8989
+      - traefik.frontend.entryPoints=http
     volumes:
       # folder where config will be stored
       - ${DATAFOLDER}/sonarr/config:/config
@@ -123,17 +143,22 @@ services:
     restart: ${RESTARTPOLICY}
     networks:
       - torrent_net
+      - web
     depends_on:
       - transmission
       - jackett
-      - nginx
+      - traefik
       - plex
       - proxy
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
-      - VIRTUAL_HOST=radarr.${LOCALDOMAIN}
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=Host:radarr.${LOCALDOMAIN}
+      - traefik.port=7878
+      - traefik.frontend.entryPoints=http
     volumes:
       # folder where config will be stored
       - ${DATAFOLDER}/radarr/config:/config
@@ -152,15 +177,21 @@ services:
       - sonarr
       - radarr
       - plex
-      - nginx
+      - traefik
     networks:
       - plex_net
       - torrent_net
+      - web
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
-      - VIRTUAL_HOST=ombi.${LOCALDOMAIN}
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=Host:ombi.${LOCALDOMAIN}
+      - traefik.port=3579
+      - traefik.frontend.redirect.entryPoint=https
+      - traefik.frontend.headers.SSLRedirect=true
     volumes:
       # folder where config will be stored
       - ${DATAFOLDER}/ombi/config:/config
@@ -172,9 +203,10 @@ services:
     container_name: plex
     restart: ${RESTARTPOLICY}
     depends_on:
-      - nginx
+      - traefik
     networks:
       - plex_net
+      - web
     ports:
       - 32400:32400/tcp
       - 3005:3005/tcp
@@ -188,8 +220,6 @@ services:
     environment:
       - TZ=${TZ}
       - PLEX_CLAIM=${PLEX_CLAIM}
-      - VIRTUAL_HOST=plex.${LOCALDOMAIN}
-      - VIRTUAL_PORT=32400
     hostname: plex-docker
     volumes:
       # folder where config will be stored
@@ -198,6 +228,11 @@ services:
       - ${DATAFOLDER}/plex/temp:/transcode
       # media folder where all movies and series are stored
       - ${MOUNTFOLDER}/MEDIA:/data
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=Host:plex.${LOCALDOMAIN}
+      - traefik.port=32400
+      - traefik.frontend.entryPoints=http
 
   tautulli:
     image: tautulli/tautulli
@@ -205,14 +240,19 @@ services:
     restart: ${RESTARTPOLICY}
     depends_on:
       - plex
-      - nginx
+      - traefik
     networks:
       - plex_net
+      - web
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
-      - VIRTUAL_HOST=tautulli.${LOCALDOMAIN}
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=Host:tautulli.${LOCALDOMAIN}
+      - traefik.port=8181
+      - traefik.frontend.entryPoints=http
     ports:
       - 8181:8181
     volumes:
@@ -225,4 +265,6 @@ networks:
   torrent_net:
     driver: bridge
   plex_net:
+    driver: bridge
+  web:
     driver: bridge
