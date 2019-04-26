@@ -18,6 +18,15 @@ services:
       - traefik.port=9000
       - traefik.frontend.entryPoints=http
 
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: ${RESTARTPOLICY}
+    networks:
+      - web
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
   traefik:
     image: traefik
     container_name: traefik
