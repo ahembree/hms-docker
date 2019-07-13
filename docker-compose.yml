@@ -247,6 +247,8 @@ services:
     environment:
       - TZ=${TZ}
       - PLEX_CLAIM=${PLEX_CLAIM}
+      - ADVERTISE_IP=${HOSTIP}:32400
+      - ALLOWED_NETWORKS=${HOSTSUBNET}
     hostname: plex-docker
     volumes:
       # folder where config will be stored
