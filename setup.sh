@@ -9,7 +9,7 @@ if [[ ! -f "$(pwd)/.env" ]] ; then
   cp "$(pwd)/.env.example" "$(pwd)/.env"
   sudo chown $USER:$USER "$(pwd)/.env"
   sudo chmod 600 "$(pwd)/.env"
-  echo "${yellow}You did not have a .env file, so the example has been copied.${reset}"
+  echo "${yellow}You did not have an .env file, so the example has been copied.${reset}"
   echo "${yellow}Please modify your .env file with the correct info, then run this script again.${reset}"
   exit
 elif [[ -f "$(pwd)/.env" ]] ; then
@@ -27,6 +27,8 @@ radarr
 ombi
 jackett
 transmission
+portainer
+traefik
 )
 
 declare -A req_vars=(
@@ -191,8 +193,9 @@ config_network_share () {
 if [[ "$(uname)" == "Darwin" ]] ; then
 	echo "Running MacOS. The containers were tested and work on MacOS, but ${yellow}you will need to use local directories because I never tested remote shares.${reset}"
   echo "Simply running ${green}docker-compose up -d${reset} will start the containers once you have the required dependencies installed."
+  echo "${red}This script does not do anything on MacOS other than print these lines.${reset}"
 elif [[ "$(uname)" == "Linux" ]] ; then
-  echo "Running Linux, specifically" $(lsb_release -ds)
+  echo "Running Linux, specifically: " $(lsb_release -ds)
   check_req_vars
   privateIP=$(hostname -I | awk '{print $1; exit}')
   publicIP=$(wget -qO - icanhazip.com)
@@ -201,6 +204,8 @@ elif [[ "$(uname)" == "Linux" ]] ; then
     sudo mkdir -p ${DATAFOLDER} && echo "${green}${DATAFOLDER} created${reset}"
     sudo chown $USER:$USER ${DATAFOLDER}
     sudo chmod 775 ${DATAFOLDER}
+    mkdir -p ${DATAFOLDER}/traefik
+    cp $(pwd)/traefik.toml ${DATAFOLDER}/traefik/traefik.toml
   fi
   if [[ "$usingShare" == "true" ]]; then
     if [[ ! -d ${MOUNTFOLDER} ]]; then
