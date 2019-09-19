@@ -28,7 +28,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
   traefik:
-    image: traefik
+    image: traefik:v1.7
     container_name: traefik
     restart: ${RESTARTPOLICY}
     ports:
