@@ -5,6 +5,7 @@ Uses docker-compose to bring up the following containers to host an orchestrated
 - Plex
 - Tautulli
 - Ombi
+- MySQL with Adminer
 - Sonarr
 - Radarr
 - Jackett
@@ -63,6 +64,7 @@ Service ports:
 - Transmission: 9091
 - Portainer: 9000
 - Traefik: 8080
+- Adminer: 8082
 
 Although it is device-specific, you can update your ```/etc/hosts``` file (or ```C:\Windows\System32\drivers\etc\hosts``` on Windows) with the format
 ```
