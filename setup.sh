@@ -202,10 +202,12 @@ elif [[ "$(uname)" == "Linux" ]] ; then
   install_docker
   if [[ ! -d ${DATAFOLDER} ]] ; then
     sudo mkdir -p ${DATAFOLDER} && echo "${green}${DATAFOLDER} created${reset}"
-    sudo chown $USER:$USER ${DATAFOLDER}
-    sudo chmod 775 ${DATAFOLDER}
     mkdir -p ${DATAFOLDER}/traefik
+    mkdir -p ${DATAFOLDER}/ombi/config
     cp $(pwd)/traefik.toml ${DATAFOLDER}/traefik/traefik.toml
+    cp $(pwd)/database/database.json ${DATAFOLDER}/ombi/config/database.json
+    sudo chown -R $USER:$USER ${DATAFOLDER}
+    sudo chmod -R 775 ${DATAFOLDER}
   fi
   if [[ "$usingShare" == "true" ]]; then
     if [[ ! -d ${MOUNTFOLDER} ]]; then

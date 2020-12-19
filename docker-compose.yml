@@ -206,6 +206,7 @@ services:
       - radarr
       - plex
       - traefik
+      - mysql
     networks:
       - plex_net
       - torrent_net
@@ -225,6 +226,30 @@ services:
       - ${DATAFOLDER}/ombi/config:/config
     ports:
       - 3579:3579
+
+  mysql:
+    image: mysql:8.0.22
+    container_name: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    restart: ${RESTARTPOLICY}
+    networks:
+      - plex_net
+    environment:
+      MYSQL_ROOT_PASSWORD: hmsdocker
+    volumes:
+      # initializes database on first run
+      - ./database:/docker-entrypoint-initdb.d
+      # folder where database data is stored
+      - ${DATAFOLDER}/mysql:/var/lib/mysql
+
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    restart: ${RESTARTPOLICY}
+    networks:
+      - plex_net
+    ports:
+      - 8082:8080
 
   plex:
     image: plexinc/pms-docker:latest
