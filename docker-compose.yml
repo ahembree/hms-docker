@@ -1,7 +1,7 @@
 version: '3'
 services:
   portainer:
-    image: portainer/portainer
+    image: portainer/portainer:latest
     container_name: portainer
     command: -H unix:///var/run/docker.sock
     restart: ${RESTARTPOLICY}
@@ -19,7 +19,7 @@ services:
       - traefik.frontend.entryPoints=http
 
   watchtower:
-    image: containrrr/watchtower
+    image: containrrr/watchtower:latest
     container_name: watchtower
     restart: ${RESTARTPOLICY}
     networks:
@@ -49,7 +49,7 @@ services:
       - traefik.frontend.entryPoints=http
 
   transmission:
-    image: haugene/transmission-openvpn
+    image: haugene/transmission-openvpn:latest
     container_name: transmission
     restart: ${RESTARTPOLICY}
     depends_on:
@@ -88,7 +88,7 @@ services:
       - WEBPROXY_PORT=8888
 
   proxy:
-    image: haugene/transmission-openvpn-proxy
+    image: haugene/transmission-openvpn-proxy:latest
     container_name: proxy
     restart: ${RESTARTPOLICY}
     networks:
@@ -107,7 +107,7 @@ services:
       - traefik.frontend.entryPoints=http
 
   jackett:
-    image: linuxserver/jackett
+    image: linuxserver/jackett:latest
     container_name: jackett
     restart: ${RESTARTPOLICY}
     depends_on:
@@ -134,7 +134,7 @@ services:
       - traefik.frontend.entryPoints=http
 
   sonarr:
-    image: linuxserver/sonarr
+    image: linuxserver/sonarr:latest
     container_name: sonarr
     restart: ${RESTARTPOLICY}
     networks:
@@ -166,7 +166,7 @@ services:
       - 8989:8989
 
   radarr:
-    image: linuxserver/radarr
+    image: linuxserver/radarr:latest
     container_name: radarr
     restart: ${RESTARTPOLICY}
     networks:
@@ -198,7 +198,7 @@ services:
       - 7878:7878
 
   ombi:
-    image: linuxserver/ombi
+    image: linuxserver/ombi:latest
     container_name: ombi
     restart: ${RESTARTPOLICY}
     depends_on:
@@ -227,7 +227,7 @@ services:
       - 3579:3579
 
   plex:
-    image: plexinc/pms-docker
+    image: plexinc/pms-docker:latest
     container_name: plex
     restart: ${RESTARTPOLICY}
     depends_on:
@@ -265,7 +265,7 @@ services:
       - traefik.frontend.entryPoints=http
 
   tautulli:
-    image: tautulli/tautulli
+    image: tautulli/tautulli:latest
     container_name: tautulli
     restart: ${RESTARTPOLICY}
     depends_on:
