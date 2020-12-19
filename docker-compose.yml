@@ -10,7 +10,7 @@ services:
     ports:
       - 9000:9000
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock
       - ${DATAFOLDER}/portainer:/data
     labels:
       - traefik.enable=true
@@ -26,7 +26,7 @@ services:
       - web
     command: --cleanup --schedule "0 0 9 * * *"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock
 
   traefik:
     image: traefik:v1.7
@@ -68,7 +68,12 @@ services:
       - 1.0.0.1
     volumes:
       - ${DATAFOLDER}/transmission:/data
+      - ${MOUNTFOLDER}/transmission/incomplete:/incomplete
       - ${MOUNTFOLDER}/transmission/completed:/completed
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
     environment:
       - OPENVPN_PROVIDER=${VPNPROVIDER}
       - OPENVPN_USERNAME=${VPNUSER}
@@ -80,9 +85,12 @@ services:
       - TRANSMISSION_PEER_LIMIT_GLOBAL=3000
       - TRANSMISSION_PEER_LIMIT_PER_TORRENT=300
       - TRANSMISSION_DOWNLOAD_DIR=/completed
+      - TRANSMISSION_INCOMPLETE_DIR=/incomplete
       - TRANSMISSION_RATIO_LIMIT=${RATIO_LIMIT}
       - TRANSMISSION_RATIO_LIMIT_ENABLED=${RATIO_ENABLED}
+      - TRANSMISSION_WATCH_DIR_ENABLED=false
       - HEALTH_CHECK_HOST=google.com
+      - LOCAL_NETWORK=${HOSTSUBNET}
       - TZ=${TZ}
       - WEBPROXY_ENABLED=true
       - WEBPROXY_PORT=8888
